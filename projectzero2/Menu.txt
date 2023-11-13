@@ -1,0 +1,108 @@
+#pragma once
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <sstream>
+using namespace sf;
+using namespace std;
+
+class Text_Draw {
+public:
+    Text text;
+    Font font;
+    Text_Draw() {
+        font.loadFromFile("2006.ttf");
+        text.setFillColor(Color::Magenta);
+        text.setStyle(sf::Text::Bold);
+        text.setFont(font);
+        text.setCharacterSize(65);
+    }
+
+    void ForK(int k)
+    {
+        text.setString(to_string(k));//задаем строку тексту и вызываем сформированную выше строку методом .str() 
+    }
+
+    void Change() {
+
+        text.setString("");
+
+    }
+    void Text(const char Text[]) {
+        text.setString(Text);
+    }
+
+    void setPosition(float x, float y) {
+        text.setPosition(x, y);
+    }
+
+    FloatRect getRect(float x, float y) {//ф-ция получения прямоугольника. его коорд,размеры (шир,высот).
+        return FloatRect(x, y, 65, 65);//эта ф-ция нужна для проверки столкновений 
+    }
+
+};
+
+void Menu(RenderWindow& window) {
+    setlocale(0, "");
+    Text_Draw newgame, about, exit, control;
+    control.text.setCharacterSize(32);
+    control.Text("Твоя задача собрать число, которое написано в верхннем левом углу.\n"  
+                  "Текущее число написано в правом верхнем углу\n"
+                  "Это можно сделать с помощбю операций + , -, *\n"
+                  "(Кнопки соответствуют + , -и 8(которое*)(все они сверху\n"
+                  "клавиатуры, а не сбоку), Если у вас не получается\n"
+                  "собрать число, то R - рестарт"
+                  "A - идти влево, D - идти вправо,\n" 
+                  "Space - прыжок");
+
+    newgame.Text("New Game");
+    about.Text("About");
+    exit.Text("Exit");
+
+    bool isMenu = 1;
+    int menuNum = 0;
+    newgame.setPosition(100, 40);
+    about.setPosition(100, 140);
+    exit.setPosition(100, 240);
+    control.setPosition(0, 0);
+
+    //////////////////////////////МЕНЮ///////////////////
+    while (isMenu)
+    {
+
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+        }
+        newgame.text.setFillColor(Color::White);
+        about.text.setFillColor(Color::White);
+        exit.text.setFillColor(Color::White);
+        menuNum = 0;
+        window.clear(Color(129, 181, 221));
+
+
+        if (IntRect(104, 53, 320, 53).contains(Mouse::getPosition(window))) { newgame.text.setFillColor(Color::Blue); menuNum = 1; }
+        if (IntRect(100, 153, 185, 53).contains(Mouse::getPosition(window))) { about.text.setFillColor(Color::Blue); menuNum = 2; }
+        if (IntRect(100, 253, 128, 53).contains(Mouse::getPosition(window))) { exit.text.setFillColor(Color::Blue); menuNum = 3; }
+
+
+        if (Mouse::isButtonPressed(Mouse::Left))
+        {
+            if (menuNum == 1) { isMenu = false; }//если нажали первую кнопку, то выходим из меню 
+            if (menuNum == 2) { window.clear(Color(129, 181, 221)); 
+            window.draw(control.text); window.display(); 
+            while (!Keyboard::isKeyPressed(Keyboard::Escape)); }
+            if (menuNum == 3) { window.close(); }
+
+        }
+
+        window.draw(newgame.text);
+        window.draw(about.text);
+        window.draw(exit.text);
+
+
+        window.display();
+    }
+    ////////////////////////////////////////////////////   
+}

@@ -1,0 +1,423 @@
+#include "pch.h"
+#include <SFML/Graphics.hpp>
+#include "view.h"
+#include "Map.h"
+#include <iostream>
+#include <sstream>
+using namespace sf;
+using namespace std;
+const int max_size = 10;
+
+class Player  {
+public: 
+    enum { left, right, stay } state;//добавляем тип перечисления - состояние объекта
+    float dx, dy, x, y, speed, CurrentFrame;//добавили переменную таймер для будущих целей
+    int w, h;
+    bool onGround;
+    Texture texture;
+    Sprite sprite;
+
+    Player(Image &image, float X, float Y, int W, int H) 
+    { state = stay; //инициализируем.получаем все объекты для взаимодействия персонажа с картой
+            sprite.setTextureRect(IntRect(0, 0, w, h));
+            x = X; y = Y; w = W; h = H; CurrentFrame = 0;
+            speed = 0; dx = 0; dy = 0;
+            onGround = false;
+            texture.loadFromImage(image);
+            sprite.setTexture(texture);
+            sprite.setOrigin(w / 2, h / 2);
+    }
+    Player& operator =(const Player& p) {
+        this->x = p.x;
+        this->y = p.y;
+        this->dx = p.dx;
+        this->dy = p.dy;
+        this->w = p.w;
+        this->h = p.h;
+        this->state = p.state;
+        this->speed = p.speed;
+        this->CurrentFrame = p.CurrentFrame;
+        this->onGround = p.onGround;
+        this->texture.loadFromImage(p.texture.copyToImage());
+        this->sprite.setTexture(this->texture);
+        this->sprite.setOrigin(this->w / 2, this->h / 2);
+        sprite.setTextureRect(IntRect(0, 0, this->w, this->h));
+        return *this;
+    }
+    Player() {};
+    
+    FloatRect getRect() {//ф-ция получения прямоугольника. его коорд,размеры (шир,высот).
+        return FloatRect(x, y, w, h);//эта ф-ция нужна для проверки столкновений 
+    }
+
+    void control() {
+
+        if (Keyboard::isKeyPressed) {
+            if ((Keyboard::isKeyPressed(Keyboard::A))) {
+                state = left; speed = 0.4;
+            }
+            if ((Keyboard::isKeyPressed(Keyboard::D))) {
+                state = right; speed = 0.4;
+                
+            }
+
+            if ((Keyboard::isKeyPressed(Keyboard::Space) && (onGround))) {
+                 dy = -1.2; onGround = false;
+            }
+            if (speed == 0) {state = stay;}
+        }
+        
+    }
+
+    void checkCollisionWithMap(float Dx, float Dy)//ф ция проверки столкновений с картой
+    {
+        for (int i = y / 32; i < (y + h) / 32; i++)//проходимся по элементам карты
+            for (int j = x / 32; j < (x + w) / 32; j++)
+            {
+                if (Map[i][j] == '0' || Map[i][j] == 'q')
+                {
+                    if (Dy > 0) { y = i * 32 - h;  dy = 0; onGround = true; }//по Y вниз=>идем в пол(стоим на месте) или падаем. В этот момент надо вытолкнуть персонажа и поставить его на землю, при этом говорим что мы на земле тем самым снова можем прыгать
+                    if (Dy < 0) { y = i * 32 + 32;  dy = 0; }//столкновение с верхними краями карты(может и не пригодиться)
+                    if (Dx > 0) { x = j * 32 - w; }//с правым краем карты
+                    if (Dx < 0) { x = j * 32 + 32; }// с левым краем карты
+                }
+                
+            }
+    }
+
+    void Animation(float Y, float time) {
+        CurrentFrame += 0.005 * time; if (CurrentFrame > 4) CurrentFrame -= 3;
+        sprite.setTextureRect(IntRect(189 * int(CurrentFrame), Y, 144, 216));
+    }
+
+    void update(float time)
+    {
+        control();      
+        switch (state)
+        {        
+        case right: dx = speed;  Animation(576, time); break; 
+        case left: dx = -speed;  Animation(864, time); break; 
+        case stay: dx = 0; sprite.setTextureRect(IntRect(0, 0, 144, 216)); break;
+        }
+        
+        x += dx * time;
+        checkCollisionWithMap(dx, 0);
+        y += dy * time;
+        checkCollisionWithMap(0, dy);
+        
+        sprite.setPosition(x + w / 2, y + h / 2); //задаем позицию спрайта в центр
+        speed = 0;
+        dy = dy + 0.0015 * time; // притяжение к земле
+        setplayercoordinateforview(x, y);
+    }
+};
+
+class Platform{
+public:
+    float x, y, w, h;
+    Texture texture;
+    Sprite sprite;
+
+    Platform(Image image, float X, float Y, int W, int H){
+        x = X; y = Y; w = W; h = H; texture.loadFromImage(image); sprite.setTexture(texture); sprite.setOrigin(w / 2, h / 2);
+        sprite.setTextureRect(IntRect(0, 0, w, h));
+        sprite.setPosition(x + w / 2, y + h / 2);  
+        sprite.setColor(Color::Black);
+    }
+    Platform() {};
+
+    FloatRect getRect() {//ф-ция получения прямоугольника. его коорд,размеры (шир,высот).
+        return FloatRect(x, y, w, h);//эта ф-ция нужна для проверки столкновений 
+    }
+};
+
+class Door {
+public:
+    float x, y, w, h;
+    bool open;
+    Texture texture;
+    Sprite sprite;
+
+    Door(Image image, float X, float Y, int W, int H){  
+        x = X; y = Y; w = W; h = H; texture.loadFromImage(image); sprite.setTexture(texture); sprite.setOrigin(w / 2, h / 2);
+        sprite.setPosition(x + w / 2, y + h / 2);
+        open = false;
+        
+        
+    }
+    Door() {};
+
+    FloatRect getRect() {//ф-ция получения прямоугольника. его коорд,размеры (шир,высот).
+        return FloatRect(x, y, w, h);//эта ф-ция нужна для проверки столкновений 
+    }
+
+    void Open(bool Open) {
+        if (Open == false) {
+            open = false;
+            sprite.setTextureRect(IntRect(0, 0, w, h));
+        }
+        if (Open == true) {
+            open = true;
+            sprite.setColor(Color::Transparent);
+        }
+    }
+};
+
+class Text_Draw{
+public:
+    Text text;
+    Font font;
+	Text_Draw() { 
+        font.loadFromFile("2006.ttf");
+	    text.setFillColor(Color::Magenta);
+	    text.setStyle(sf::Text::Bold);
+        text.setFont(font);
+        text.setCharacterSize(65);
+	}
+
+    void ForK(int k)
+    {
+        text.setString(to_string(k));//задаем строку тексту и вызываем сформированную выше строку методом .str() 
+    }
+
+    void Change() {
+        
+        text.setString("");
+        
+    }
+
+    void setPosition(float x, float y){
+        text.setPosition(x, y);
+    }
+
+    FloatRect getRect(float x, float y) {//ф-ция получения прямоугольника. его коорд,размеры (шир,высот).
+        return FloatRect(x, y, 65, 65);//эта ф-ция нужна для проверки столкновений 
+    }
+
+};
+
+void Game (Platform platform_array[], Text_Draw text_array[], int array_for_rand[], int array_for_k_num[], int &d, int &k, int &Sum, Player &p, Door &door, Image &heroImage, Image &doorImage, Image &platformImage)
+{
+    d = rand() % 30; while (d < 10 || d == 0)  d = rand() % 30;  
+
+    p = Player(heroImage, 100, 1128, 143, 216);
+    door = Door(doorImage, 2272, 1120, 32, 224);
+
+    platform_array[0] = Platform(platformImage, 200, 1000, 159, 29);
+    platform_array[1] = Platform(platformImage, 600, 900, 159, 29);
+    platform_array[2] = Platform(platformImage, 1164, 950, 159, 29);
+    platform_array[3] = Platform(platformImage, 2000, 1000, 159, 29);
+    platform_array[4] = Platform(platformImage, 1750, 800, 159, 29);
+    platform_array[5] = Platform(platformImage, 1300, 649, 159, 29);
+    platform_array[6] = Platform(platformImage, 980, 450, 159, 29);
+    platform_array[7] = Platform(platformImage, 1600, 300, 159, 29);
+    platform_array[8] = Platform(platformImage, 2050, 435, 159, 29);
+    platform_array[9] = Platform(platformImage, 465, 500, 159, 29);
+    
+    
+    
+    array_for_rand[0] = rand() % (d - 1) + 1;
+    for (int i = 1; i < 10; i++) {
+        bool flag = false;
+        while (flag == false) {
+            flag = true;
+            array_for_rand[i] = rand() % (d - 1) + 1;
+            for (int j = 0; j < i; j++) {
+                if (array_for_rand[i] == array_for_rand[j])
+                {
+                    flag = false;
+                    break;
+                }
+
+            }
+        }
+    }
+    for (int i = 0; i < 4; i++) {
+        bool flag = false;
+        while (flag == false) {
+            flag = true;
+            array_for_k_num[i] = rand() % max_size;
+            for (int j = 0; j < i; j++) {
+                if (array_for_k_num[i] == array_for_k_num[j])
+                {
+                    flag = false;
+                    break;
+                }
+
+            }
+        }
+    }
+    for (int i = 0; i < 10; i++) { text_array[i].ForK(array_for_rand[i]); }
+
+
+
+    for (int i = 0; i < 4; i++) {
+        k += array_for_rand[array_for_k_num[i]];  
+    }
+    
+    for (int i = 0; i < max_size; i++) {
+        text_array[i].setPosition(platform_array[i].x + 54, platform_array[i].y - 80);
+    }
+
+    text_array[10].ForK(k);
+}
+
+int main()
+{ 
+    RenderWindow window(VideoMode(1080, 920), "Project Zero");
+
+    view.reset(sf::FloatRect(0, 0, 1000, 840)); 
+    int d = 0;
+    int Sum = 0;
+    int k = 0;
+    srand(time(0));
+
+    Image  image;
+    image.loadFromFile("img/Map.png");
+    Texture texture;
+    texture.loadFromImage(image); 
+    Sprite spritemap;
+    spritemap.setTexture(texture);
+
+    Image platformImage;
+    platformImage.loadFromFile("img/Platform.png");
+
+    Image heroImage;
+    heroImage.loadFromFile("img/Walk.PNG");
+
+    Image doorImage;
+    doorImage.loadFromFile("img/Door.png");
+    
+
+    int array_for_rand[max_size];
+    int array_for_k_num[4];
+    Text_Draw text_array[max_size + 2];
+    //Text_Draw Sumy();
+    Platform platform_array[max_size];   
+    Player p;//передаем координаты прямоугольника player из карты в координаты нашего игрока
+    Door door; //2272 -68
+
+    Clock clock;    
+
+    Game(platform_array, text_array, array_for_rand, array_for_k_num, d, k, Sum, p, door, heroImage, doorImage, platformImage);
+
+    while (window.isOpen())
+    {
+        
+        text_array[10].setPosition(view.getCenter().x - 500, view.getCenter().y - 430);
+        text_array[11].setPosition(view.getCenter().x + 420, view.getCenter().y - 430);
+        text_array[11].ForK(Sum);
+        float time = clock.getElapsedTime().asMicroseconds();
+
+        clock.restart();
+        time = time / 800;
+        
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            // Логика Игры
+            
+            if (event.type == sf::Event::KeyPressed) {
+                for (int i = 0; i < max_size; i++) {
+                    if (text_array[i].getRect(platform_array[i].x + 54, platform_array[i].y - 80).intersects(p.getRect())) {
+                        if (Keyboard::isKeyPressed(Keyboard::Equal)) {
+                            text_array[i].Change();
+                            Sum += array_for_rand[i];
+                            array_for_rand[i] = 0;
+                        }
+                        if (Keyboard::isKeyPressed(Keyboard::Hyphen)) {
+                            text_array[i].Change();
+                            Sum -= array_for_rand[i];
+                            array_for_rand[i] = 0;
+                        }
+                        if (Keyboard::isKeyPressed(Keyboard::Num8)) {
+                            text_array[i].Change();
+                            if (Sum == 0) Sum = 1;
+                            Sum *= array_for_rand[i];
+                            array_for_rand[i] = 0;
+                        }
+                        
+                    }
+
+                }
+                if (Keyboard::isKeyPressed(Keyboard::R)) {
+                    Sum = 0; k = 0; d = 0;
+                    for (int i = 0; i < 10; i++) { array_for_rand[i] = 0; }
+                    Game(platform_array, text_array, array_for_rand, array_for_k_num, d, k, Sum, p, door, heroImage, doorImage, platformImage);
+                }  
+                
+            }        
+        }
+        
+        
+       // Логика игры
+        for (int i = 0; i < max_size; i++) {
+            if (platform_array[i].getRect().intersects(p.getRect())) {
+                if ((p.dy > 0))
+                    if (p.y + p.h < platform_array[i].y + platform_array[i].h && platform_array[i].x + platform_array[i].w / 2 + 40> p.x && platform_array[i].x - platform_array[i].w / 2 - 15 < p.x)//если игрок находится выше платформы, т.е это его ноги минимум (тк мы уже проверяли что он столкнулся с платформой)
+                    {
+                        p.y = platform_array[i].y - p.h; p.dy = 0; p.onGround = true;  // то выталкиваем игрока так, чтобы он как бы стоял на платформе
+
+                    }
+                    else p.onGround = false;
+            }
+        }
+        if (Sum == k)  door.Open(true); 
+        if (Sum != k) { door.Open(false); door.sprite.setColor(Color::Yellow);}
+        if (door.open == false && door.getRect().intersects(p.getRect()) && p.dx>0)
+        {
+            p.x = 2128;           
+        };
+        if (door.open == true && door.getRect().intersects(p.getRect()) && p.dx > 0)
+        {
+            for (int i = 0; i < 10; i++) { array_for_rand[i] = 0; }
+            Sum = 0; k = 0; d = 0; Game(platform_array, text_array, array_for_rand, array_for_k_num, d, k, Sum, p, door, heroImage, doorImage, platformImage);
+        }
+
+
+        p.update(time);//оживляем объект p класса Player с помощью времени sfml, передавая время в качестве параметра функции update. благодаря этому персонаж может двигаться
+
+
+        window.setView(view);
+        window.clear();
+
+
+        //Карта
+
+        for (int i = 0; i < HMap; i++) {
+            for (int j = 0; j < WMap; j++)
+            {
+                if (Map[i][j] == ' ') spritemap.setTextureRect(IntRect(66, 0, 32, 32));
+                if (Map[i][j] == '0') spritemap.setTextureRect(IntRect(66, 33, 32, 32));
+                if (Map[i][j] == '1') spritemap.setTextureRect(IntRect(33, 0, 32, 32));
+                if (Map[i][j] == '2') spritemap.setTextureRect(IntRect(33, 33, 32, 32));
+                if (Map[i][j] == '3') spritemap.setTextureRect(IntRect(0, 0, 32, 32));
+                if (Map[i][j] == '4') spritemap.setTextureRect(IntRect(0, 33, 32, 32));
+                if (Map[i][j] == 'q') spritemap.setTextureRect(IntRect(0, 99, 32, 32));
+
+
+                spritemap.setPosition(j * 32, i * 32);
+
+                window.draw(spritemap);
+            }
+        }
+	   
+        // Отрисовка
+
+		for (int i = 0; i < max_size; i++) {
+			window.draw(platform_array[i].sprite);
+		}
+        for (int i = 0; i < 12; i++) {
+            window.draw(text_array[i].text);
+        }
+        window.draw(door.sprite);
+        window.draw(p.sprite);
+
+
+        window.display();
+    }
+
+    return 0;
+}

@@ -1,0 +1,23 @@
+for(int i=0; i< max_size; i++)
+        if (platform_array[i].getRect().intersects(p.getRect())) {
+            if ((p.dy > 0) )
+                if (p.y + p.h < platform_array[i].y + platform_array[i].h  && platform_array[i].x+platform_array[i].w/2 + 40> p.x && platform_array[i].x - platform_array[i].w / 2 -15 < p.x)//если игрок находится выше платформы, т.е это его ноги минимум (тк мы уже проверяли что он столкнулся с платформой)
+                {
+					p.y = platform_array[i].y - p.h; p.dy = 0; p.onGround = true;  // то выталкиваем игрока так, чтобы он как бы стоял на платформе
+                    
+                }
+			else p.onGround = false;
+        }
+
+Platform platform_array[max_size]{
+		Platform(platformImage, "Platform", 200, 1050, 159, 29),
+		Platform(platformImage, "Platform", 800, 900, 159, 29),
+		Platform(platformImage, "Platform", 1500, 950, 159, 29),
+		Platform(platformImage, "Platform", 2000, 1000, 159, 29),
+		Platform(platformImage, "Platform", 1900, 800, 159, 29),
+		Platform(platformImage, "Platform", 1640, 649, 159, 29),
+		Platform(platformImage, "Platform", 980, 450, 159, 29),
+		Platform(platformImage, "Platform", 1600, 300, 159, 29),
+		Platform(platformImage, "Platform", 2100, 735, 159, 29),
+		Platform(platformImage, "Platform", 1850, 640, 159, 29)
+	};

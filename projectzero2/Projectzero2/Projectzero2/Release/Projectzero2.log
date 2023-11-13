@@ -1,0 +1,46 @@
+﻿  pch.cpp
+  main.cpp
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(64): warning C4244: аргумент: преобразование "int" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(79): warning C4244: аргумент: преобразование "int" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(86): warning C4244: аргумент: преобразование "int" в "T", возможна потеря данных
+          with
+          [
+              T=float
+          ]
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(92): warning C4305: =: усечение из "double" в "float"
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(95): warning C4305: =: усечение из "double" в "float"
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(100): warning C4305: =: усечение из "double" в "float"
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(107): warning C4244: инициализация: преобразование "float" в "int", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(108): warning C4244: инициализация: преобразование "float" в "int", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(112): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(113): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(114): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(115): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(122): warning C4244: +=: преобразование "double" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(123): warning C4244: аргумент: преобразование "float" в "T", возможна потеря данных
+          with
+          [
+              T=int
+          ]
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(143): warning C4244: =: преобразование "double" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(154): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(155): warning C4244: аргумент: преобразование "float" в "T", возможна потеря данных
+          with
+          [
+              T=int
+          ]
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(173): warning C4244: =: преобразование "int" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\menu.h(188): warning C4244: аргумент: преобразование "float" в "T", возможна потеря данных
+          with
+          [
+              T=int
+          ]
+d:\project2\projectzero2\projectzero2\projectzero2\main.cpp(26): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\main.cpp(62): warning C4244: инициализация: преобразование "sf::Int64" в "float", возможна потеря данных
+d:\project2\projectzero2\projectzero2\projectzero2\main.cpp(153): warning C4244: аргумент: преобразование "int" в "float", возможна потеря данных
+  Создание кода
+  0 of 117 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Создание кода завершено
+  Projectzero2.vcxproj -> D:\Project2\projectzero2\Projectzero2\Release\Projectzero2.exe
